@@ -47,7 +47,6 @@ const UnifiedInward = () => {
     const [sellingFormData, setSellingFormData] = useState({
         receivedDate: new Date().toISOString().split('T')[0],
         supplierInvoiceNumber: '',
-        supplier: '',
         notes: ''
     });
     const [currentSellingItem, setCurrentSellingItem] = useState({
@@ -259,8 +258,7 @@ const UnifiedInward = () => {
                 items: sellingItems,
                 supplierInvoiceNumber: sellingFormData.supplierInvoiceNumber,
                 totalAmount: calculateTotal(sellingItems),
-                notes: sellingFormData.notes,
-                supplier: sellingFormData.supplier
+                notes: sellingFormData.notes
             };
 
             await accessoryInwardService.createAccessoryInward(inwardData);
@@ -271,7 +269,6 @@ const UnifiedInward = () => {
             setSellingFormData({
                 receivedDate: new Date().toISOString().split('T')[0],
                 supplierInvoiceNumber: '',
-                supplier: '',
                 notes: ''
             });
             setSellingItems([]);
@@ -662,24 +659,6 @@ const UnifiedInward = () => {
                             </div>
                         </div>
 
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Supplier
-                            </label>
-                            <select
-                                name="supplier"
-                                value={sellingFormData.supplier}
-                                onChange={handleSellingFormChange}
-                                className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                            >
-                                <option value="">Select Supplier</option>
-                                {suppliers.map(supplier => (
-                                    <option key={supplier._id} value={supplier._id}>
-                                        {supplier.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
 
                         <div className="mb-6 border-t border-gray-200 dark:border-slate-700 pt-6">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Add Selling Item</h2>

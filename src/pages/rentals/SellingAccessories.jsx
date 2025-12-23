@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Search, Archive, Trash2, Edit2, Package, Tag, Save, X } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import productService from '../../services/productService';
-import supplierService from '../../services/supplierService';
 import { Link } from 'react-router-dom';
 import { selectUser } from '../../redux/features/auth/loginSlice';
 import categoryService from '../../services/categoryService';
@@ -26,18 +25,14 @@ const SellingAccessories = () => {
         price: '',
         sku: '',
         minStockLevel: 5,
-        minStockLevel: 5,
         location: '',
-        supplier: '',
         isSellingAccessory: true
     });
 
-    const [suppliers, setSuppliers] = useState([]);
     const [categories, setCategories] = useState([]);
 
     useEffect(() => {
         fetchProducts();
-        fetchSuppliers();
         fetchCategories();
     }, []);
 
@@ -54,27 +49,6 @@ const SellingAccessories = () => {
         }
     };
 
-    const fetchSuppliers = async () => {
-        try {
-            console.log('Fetching suppliers...');
-            const data = await supplierService.getAllSuppliers();
-            console.log('Suppliers fetched raw:', data);
-            // Handle different response formats
-            let suppliersArray = [];
-            if (data && data.suppliers) {
-                suppliersArray = data.suppliers;
-            } else if (data && data.docs) {
-                suppliersArray = data.docs;
-            } else if (Array.isArray(data)) {
-                suppliersArray = data;
-            }
-            console.log('Suppliers array:', suppliersArray);
-            setSuppliers(suppliersArray);
-        } catch (error) {
-            console.error('Error fetching suppliers:', error);
-            // Don't block UI if suppliers fail, but form submission might fail
-        }
-    };
 
     const fetchProducts = async () => {
         try {
@@ -180,6 +154,9 @@ const SellingAccessories = () => {
                 isRental: false // Enforce not rental
             };
 
+            // Remove supplier to avoid backend validation error if it's optional/removed
+            delete data.supplier;
+
             console.log('Final payload to server:', data);
 
             if (editingProduct) {
@@ -212,7 +189,6 @@ const SellingAccessories = () => {
             sku: product.sku || '',
             minStockLevel: product.minStockLevel || 5,
             location: product.location || '',
-            supplier: product.supplier ? (typeof product.supplier === 'object' ? product.supplier._id : product.supplier) : '',
             isSellingAccessory: true
         });
         setShowModal(true);
@@ -243,7 +219,6 @@ const SellingAccessories = () => {
             sku: '',
             minStockLevel: 5,
             location: '',
-            supplier: '',
             isSellingAccessory: true
         });
     };
@@ -392,21 +367,6 @@ const SellingAccessories = () => {
                                         className="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-ring"
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier</label>
-                                <select
-                                    value={formData.supplier}
-                                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                                    className="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white focus:ring-2 focus:ring-ring"
-                                >
-                                    <option value="">Select Supplier</option>
-                                    {suppliers.map(supplier => (
-                                        <option key={supplier._id} value={supplier._id}>
-                                            {supplier.name}
-                                        </option>
-                                    ))}
-                                </select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
