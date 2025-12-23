@@ -52,7 +52,10 @@ const RentalProducts = () => {
     const fileInputRef = useRef(null);
 
     useEffect(() => {
-        if (token) {
+        // Fetch data if token is present in state OR localStorage
+        // This solves the issue where products don't show immediately on refresh
+        // because Redux state hydration might take a moment.
+        if (token || localStorage.getItem('token')) {
             fetchProducts();
             fetchCategories();
         }
@@ -255,7 +258,7 @@ const RentalProducts = () => {
                                     <ImageIcon className="w-12 h-12 opacity-20" />
                                 </div>
                             )}
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-y-1 group-hover:translate-y-0">
+                            <div className="absolute top-2 right-2 flex gap-2 transition-all duration-200">
                                 <Button
                                     variant="secondary"
                                     size="icon"
