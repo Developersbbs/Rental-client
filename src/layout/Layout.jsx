@@ -5,7 +5,7 @@ import { selectUser } from '@/redux/features/auth/loginSlice';
 import { Outlet } from "react-router-dom"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Menu } from "lucide-react"
+import { Menu, Lock } from "lucide-react"
 import Navbar from '@/layout/Navbar';
 
 const Layout = () => {
@@ -31,21 +31,33 @@ const Layout = () => {
           <div className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto">
             {/* Mobile Menu Button - only for authenticated users */}
             {user && (
-              <div className="md:hidden mr-4">
-                <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-foreground hover:bg-muted"
-                    >
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
-                    <Sidebar onNavigate={handleCloseSidebar} />
-                  </SheetContent>
-                </Sheet>
+              <div className="flex items-center md:hidden">
+                <div className="mr-2">
+                  <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+                    <SheetTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-foreground hover:bg-muted"
+                      >
+                        <Menu className="h-5 w-5" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-64 bg-sidebar border-r border-sidebar-border">
+                      <Sidebar onNavigate={handleCloseSidebar} />
+                    </SheetContent>
+                  </Sheet>
+                </div>
+
+                {/* Mobile Logo */}
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 rounded-lg shrink-0 shadow-sm">
+                    <Lock className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <h1 className="text-base font-bold text-foreground truncate tracking-tight">
+                    NK TOOLS
+                  </h1>
+                </div>
               </div>
             )}
 
