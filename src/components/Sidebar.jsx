@@ -220,14 +220,14 @@ const Sidebar = ({ onNavigate }) => {
                   <Lock className="w-4 h-4 text-white" />
                 </div>
                 <h1 className="text-lg font-bold text-sidebar-foreground truncate tracking-tight">
-                  RK TOOLS
+                  NK TOOLS
                 </h1>
               </div>
             ) : (
               <div
                 className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg shadow-sm cursor-pointer"
                 onClick={() => setIsCollapsed(false)}
-                title="RK TOOLS"
+                title="NK TOOLS"
               >
                 <Lock className="w-5 h-5 text-white" />
               </div>

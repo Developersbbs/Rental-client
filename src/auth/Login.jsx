@@ -87,7 +87,7 @@ const Login = () => {
                 <Lock className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold text-white tracking-tight">
-                RK TOOLS
+                NK TOOLS
               </span>
             </div>
             <div className="text-sm text-slate-300 font-medium">
@@ -192,7 +192,7 @@ const Login = () => {
 
             <div className="text-center pt-4 border-t border-slate-200 dark:border-slate-700">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                © 2025 RK TOOLS. All rights reserved.
+                © 2025 NK TOOLS. All rights reserved.
               </p>
             </div>
           </div>
