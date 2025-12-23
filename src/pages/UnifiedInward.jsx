@@ -664,13 +664,12 @@ const UnifiedInward = () => {
 
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Supplier *
+                                Supplier
                             </label>
                             <select
                                 name="supplier"
                                 value={sellingFormData.supplier}
                                 onChange={handleSellingFormChange}
-                                required
                                 className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                             >
                                 <option value="">Select Supplier</option>
