@@ -326,7 +326,7 @@ const SellingAccessories = () => {
 
             {/* Add/Edit Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[150] p-4 overflow-y-auto">
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-lg my-8">
                         <div className="flex justify-between items-center p-6 border-b dark:border-slate-700">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">

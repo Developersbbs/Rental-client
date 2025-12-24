@@ -321,7 +321,7 @@ const RentalCustomers = () => {
                 </div>
 
                 {showModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[150]">
                         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                                 {editingCustomer ? 'Edit Rental Customer' : 'Add Rental Customer'}
@@ -378,7 +378,7 @@ const RentalCustomers = () => {
 
                 {/* Block Confirmation Modal */}
                 {showBlockModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[150]">
                         <div className="bg-white dark:bg-slate-800 rounded-lg p-6 w-full max-w-sm">
                             <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-slate-100">
                                 {blockAction === 'block' ? 'Block Customer' : 'Unblock Customer'}

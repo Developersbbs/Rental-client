@@ -705,7 +705,7 @@ const NewRental = () => {
             </div>
 
             {showPendingModal && pendingDetails && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-[150]">
                     <Card className="max-w-2xl w-full shadow-2xl border-destructive/20 overflow-hidden">
                         <CardHeader className="bg-destructive/5 border-b border-destructive/10">
                             <div className="flex justify-between items-center">

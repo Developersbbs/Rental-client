@@ -295,7 +295,7 @@ const ManageRentalItems = () => {
 
             {/* Add/Edit Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[150] p-4 overflow-y-auto">
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl my-8 max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center p-6 border-b dark:border-slate-700 flex-shrink-0">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
