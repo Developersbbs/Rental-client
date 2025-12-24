@@ -161,7 +161,7 @@ export default function NotificationBell() {
 
       {/* Notification Popup */}
       <div
-        className={`absolute top-12 right-0 w-80 sm:w-96 bg-white rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-200 transform transition-all duration-200 origin-top-right ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2 pointer-events-none'
+        className={`fixed md:absolute top-16 md:top-12 left-4 right-4 md:left-auto md:right-0 md:w-96 bg-white rounded-xl shadow-2xl overflow-hidden z-[150] border border-gray-200 transform transition-all duration-200 origin-top md:origin-top-right ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2 pointer-events-none'
           }`}
       >
         <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
