@@ -371,11 +371,14 @@ const NewRental = () => {
                                     </label>
                                     <Input
                                         type="datetime-local"
+                                        step="1"
+                                        min={null}
+                                        max={null}
                                         value={formData.outTime}
                                         onChange={(e) => setFormData({ ...formData, outTime: e.target.value })}
                                     />
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        Leave empty to use current time
+                                        Leave empty to use current time (any date allowed)
                                     </p>
                                 </div>
                                 <div>
@@ -384,6 +387,9 @@ const NewRental = () => {
                                     </label>
                                     <Input
                                         type="datetime-local"
+                                        step="1"
+                                        min={null}
+                                        max={null}
                                         value={formData.expectedReturnTime}
                                         onChange={(e) => setFormData({ ...formData, expectedReturnTime: e.target.value })}
                                     />
