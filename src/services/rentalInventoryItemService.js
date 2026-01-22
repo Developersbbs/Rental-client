@@ -59,6 +59,26 @@ const rentalInventoryItemService = {
         } catch (error) {
             throw error.response?.data || { message: 'Failed to fetch item history' };
         }
+    },
+
+    // Get archived items for a rental product
+    getArchivedItems: async (rentalProductId) => {
+        try {
+            const response = await instance.get(`/rental-inventory-items/archived/${rentalProductId}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: 'Failed to fetch archived items' };
+        }
+    },
+
+    // Toggle archive status
+    toggleArchiveStatus: async (id) => {
+        try {
+            const response = await instance.patch(`/rental-inventory-items/${id}/archive`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: 'Failed to update archive status' };
+        }
     }
 };
 

@@ -312,6 +312,7 @@ const Purchase = () => {
               purchase={purchases.find(p => p._id === selectedPurchase) || purchase}
               onClose={() => setShowReceiveModal(false)}
               onSubmit={handleSubmitReceive}
+            />
           )}
 
           {showPaymentModal && selectedPurchase && (

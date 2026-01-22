@@ -126,7 +126,7 @@ const FinancialReports = () => {
                                         </tr>
                                     ))}
                                 </tbody>
-                            </table>
+                            </table>t
                         </div>
                     </div>
 

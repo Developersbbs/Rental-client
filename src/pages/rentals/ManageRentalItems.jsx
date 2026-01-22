@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, History, Archive } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, X, History, Archive, Ban } from 'lucide-react';
 import ScrapItemModal from '../../components/ScrapItemModal';
 import rentalInventoryItemService from '../../services/rentalInventoryItemService';
 import rentalProductService from '../../services/rentalProductService';
@@ -11,6 +11,8 @@ const ManageRentalItems = () => {
     const navigate = useNavigate();
     const [product, setProduct] = useState(null);
     const [items, setItems] = useState([]);
+    const [archivedItems, setArchivedItems] = useState([]);
+    const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
     const [availableAccessories, setAvailableAccessories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -60,13 +62,20 @@ const ManageRentalItems = () => {
             const itemsData = await rentalInventoryItemService.getItemsByRentalProduct(productId);
             setItems(itemsData);
 
+            // Fetch archived items
+            const archivedData = await rentalInventoryItemService.getArchivedItems(productId);
+            setArchivedItems(archivedData);
+
             // Fetch accessories
             const accessoriesData = await accessoryService.getAccessoriesByProduct(productId);
             setAvailableAccessories(accessoriesData);
+
+            setLoading(false);
         } catch (err) {
-            setError('Failed to fetch data');
             console.error(err);
-        } finally {
+            // Detailed error message
+            const errMsg = err.message || (err.response?.data?.message) || 'Failed to fetch data';
+            setError(errMsg);
             setLoading(false);
         }
     };
@@ -89,8 +98,23 @@ const ManageRentalItems = () => {
         setShowModal(true);
     };
 
+    const handleArchiveToggle = async (id, isArchiving) => {
+        const action = isArchiving ? 'archive' : 'restore';
+        if (window.confirm(`Are you sure you want to ${action} this rental item?`)) {
+            try {
+                await rentalInventoryItemService.toggleArchiveStatus(id);
+                setSuccess(`Rental item ${isArchiving ? 'archived' : 'restored'} successfully`);
+                setTimeout(() => setSuccess(''), 3000);
+                fetchData();
+            } catch (err) {
+                setError(`Failed to ${action} rental item`);
+                setTimeout(() => setError(''), 3000);
+            }
+        }
+    };
+
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this rental item?')) {
+        if (window.confirm('Are you sure you want to PERMANENTLY delete this rental item? This action cannot be undone.')) {
             try {
                 await rentalInventoryItemService.deleteItem(id);
                 setSuccess('Rental item deleted successfully');
@@ -185,11 +209,12 @@ const ManageRentalItems = () => {
     };
 
     // Pagination calculations
-    const totalItems = items.length;
+    const displayItems = viewMode === 'active' ? items : archivedItems;
+    const totalItems = displayItems.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentItems = items.slice(startIndex, endIndex);
+    const currentItems = displayItems.slice(startIndex, endIndex);
 
     // Pagination handlers
     const handlePageChange = (newPage) => {
@@ -230,6 +255,27 @@ const ManageRentalItems = () => {
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
                 >
                     <Plus className="w-4 h-4 mr-2" /> Add Item
+                </button>
+            </div>
+
+            <div className="flex gap-4 mb-4 border-b dark:border-slate-700">
+                <button
+                    onClick={() => { setViewMode('active'); setCurrentPage(1); }}
+                    className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${viewMode === 'active'
+                        ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        }`}
+                >
+                    Active Items ({items.length})
+                </button>
+                <button
+                    onClick={() => { setViewMode('archived'); setCurrentPage(1); }}
+                    className={`pb-2 px-4 text-sm font-medium transition-colors border-b-2 ${viewMode === 'archived'
+                        ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                        }`}
+                >
+                    Archived Items ({archivedItems.length})
                 </button>
             </div>
 
@@ -296,19 +342,39 @@ const ManageRentalItems = () => {
                                         ₹{item.purchaseCost || 0}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button onClick={() => handleEdit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                        {item.status !== 'scrap' && (
+                                        {viewMode === 'active' ? (
+                                            <button onClick={() => handleEdit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 mr-3">
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Permanently">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {item.status !== 'scrap' && viewMode === 'active' && (
                                             <button
                                                 onClick={() => handleScrap(item)}
-                                                className="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
+                                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 mr-3"
                                                 title="Scrap Item"
                                             >
+                                                <Ban className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {viewMode === 'active' ? (
+                                            <button
+                                                onClick={() => handleArchiveToggle(item._id, true)}
+                                                className="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
+                                                title="Archive Item (Soft Delete)"
+                                            >
                                                 <Archive className="w-4 h-4" />
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleArchiveToggle(item._id, false)}
+                                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-3"
+                                                title="Restore Item"
+                                            >
+                                                <History className="w-4 h-4" />
                                             </button>
                                         )}
                                     </td>
@@ -603,7 +669,7 @@ const ManageRentalItems = () => {
                     <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm flex flex-col animate-in fade-in zoom-in duration-200">
                         <div className="flex justify-between items-center p-4 border-b dark:border-slate-700 bg-red-50 dark:bg-red-900/10 rounded-t-lg">
                             <h3 className="text-md font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
-                                <Archive className="w-4 h-4" />
+                                <Ban className="w-4 h-4" />
                                 Scrapped Item Details
                             </h3>
                             <button onClick={() => setShowScrapDetailsModal(false)} className="text-gray-400 hover:text-gray-500">
