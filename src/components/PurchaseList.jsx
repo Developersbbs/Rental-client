@@ -9,6 +9,7 @@ const PurchaseList = ({
   onApprove,
   onReject,
   onReceive,
+  onPay,
   filters,
   onFilterChange,
   user
@@ -104,6 +105,15 @@ const PurchaseList = ({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Paid
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Due
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Payment
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -135,6 +145,20 @@ const PurchaseList = ({
                             'bg-gray-100 text-gray-800'
                       }`}>
                       {purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1).replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatCurrency(purchase.paidAmount || 0)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatCurrency(purchase.dueAmount || purchase.totalAmount)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${(purchase.paymentStatus === 'paid') ? 'bg-green-100 text-green-800' :
+                      (purchase.paymentStatus === 'partial') ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                      {purchase.paymentStatus ? purchase.paymentStatus.charAt(0).toUpperCase() + purchase.paymentStatus.slice(1) : 'Pending'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -180,6 +204,14 @@ const PurchaseList = ({
                           Receive
                         </button>
                       )}
+                      {(purchase.paymentStatus !== 'paid' && purchase.status !== 'rejected') && (
+                        <button
+                          onClick={() => onPay(purchase)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Pay
+                        </button>
+                      )}
                       {purchase.status === 'draft' && (
                         <button
                           onClick={() => onDelete(purchase._id)}
@@ -202,7 +234,7 @@ const PurchaseList = ({
           </tbody>
         </table>
       </div>
-    </div>
+    </div >
   );
 };
 

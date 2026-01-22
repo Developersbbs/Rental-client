@@ -56,6 +56,12 @@ const getPurchaseStats = async () => {
   return response.data;
 };
 
+// Add payment
+const addPayment = async (purchaseId, paymentData) => {
+  const response = await instance.post(`${API_URL}/${purchaseId}/payments`, paymentData);
+  return response.data;
+};
+
 const purchaseService = {
   createPurchase,
   getPurchases,
@@ -65,7 +71,8 @@ const purchaseService = {
   approvePurchase,
   rejectPurchase,
   receivePurchase,
-  getPurchaseStats
+  getPurchaseStats,
+  addPayment
 };
 
 export default purchaseService;

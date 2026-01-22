@@ -60,19 +60,17 @@ const PaymentAccountDetails = () => {
         }
 
         // Prepare CSV data
-        const headers = ['Date', 'Time', 'Customer Name', 'Customer Phone', 'Bill Number', 'Rental ID', 'Products', 'Payment Method', 'Amount'];
+        const headers = ['Date', 'Time', 'Type', 'Party Name', 'Party Phone', 'Reference Number', 'Products', 'Payment Method', 'Amount'];
         const rows = transactions.map(t => [
             new Date(t.paymentDate).toLocaleDateString('en-IN'),
             new Date(t.paymentDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-            t.bill?.customerName || 'N/A',
-            t.bill?.customerPhone || 'N/A',
-            t.bill?.billNumber || 'N/A',
-            t.bill?.type === 'rental' && t.bill?.rentalDetails?.rentalId
-                ? (typeof t.bill.rentalDetails.rentalId === 'object' ? t.bill.rentalDetails.rentalId?.rentalId : t.bill.rentalDetails.rentalId)
-                : 'N/A',
-            t.bill?.items?.map(item => item.name).join('; ') || 'N/A',
+            t.type === 'purchase' ? 'Expense' : 'Income',
+            t.partyName || 'N/A',
+            t.partyPhone || 'N/A',
+            t.number || 'N/A',
+            t.details?.items?.map(item => item.name || item.product?.name).join('; ') || 'N/A',
             t.paymentMethod.replace('_', ' ').toUpperCase(),
-            t.amount
+            t.type === 'purchase' ? `-${t.amount}` : t.amount
         ]);
 
         // Create CSV content
@@ -215,8 +213,8 @@ const PaymentAccountDetails = () => {
                             <thead className="bg-gray-50 dark:bg-slate-700">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bill/Rental</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Party</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reference</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Products</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Method</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
@@ -239,47 +237,43 @@ const PaymentAccountDetails = () => {
                                                 <User className="w-4 h-4 mr-2 text-gray-400" />
                                                 <div>
                                                     <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {transaction.bill?.customerName || 'N/A'}
+                                                        {transaction.partyName || 'N/A'}
                                                     </div>
-                                                    {transaction.bill?.customerPhone && (
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {transaction.bill.customerPhone}
-                                                        </div>
-                                                    )}
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                        {transaction.partyPhone || (transaction.type === 'purchase' ? 'Supplier' : 'Customer')}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900 dark:text-white">
-                                                {transaction.bill?.billNumber || 'N/A'}
+                                                {transaction.number || 'N/A'}
                                             </div>
-                                            {transaction.bill?.type === 'rental' && transaction.bill?.rentalDetails && (
-                                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                    Rental ID: {
-                                                        typeof transaction.bill.rentalDetails.rentalId === 'object'
-                                                            ? transaction.bill.rentalDetails.rentalId?.rentalId || 'N/A'
-                                                            : transaction.bill.rentalDetails.rentalId || 'N/A'
-                                                    }
-                                                </div>
-                                            )}
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                {transaction.type === 'purchase' ? 'Purchase Order' : 'Bill'}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-start">
                                                 <Package className="w-4 h-4 mr-2 text-gray-400 mt-0.5" />
                                                 <div className="text-sm text-gray-900 dark:text-white max-w-xs">
-                                                    {transaction.bill?.items && transaction.bill.items.length > 0 ? (
-                                                        <button
-                                                            onClick={() => handleShowProducts(transaction.bill.items)}
-                                                            className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                                        >
-                                                            <div className="font-medium">{transaction.bill.items[0].name}</div>
-                                                            {transaction.bill.items.length > 1 && (
-                                                                <div className="text-xs text-blue-600 dark:text-blue-400 underline">
-                                                                    Click to view all {transaction.bill.items.length} items
+                                                    <div className="text-sm text-gray-900 dark:text-white max-w-xs">
+                                                        {transaction.details?.items && transaction.details.items.length > 0 ? (
+                                                            <button
+                                                                onClick={() => handleShowProducts(transaction.details.items)}
+                                                                className="text-left hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                                            >
+                                                                <div className="font-medium">
+                                                                    {transaction.details.items[0].name || transaction.details.items[0].product?.name || 'Item'}
                                                                 </div>
-                                                            )}
-                                                        </button>
-                                                    ) : 'N/A'}
+                                                                {transaction.details.items.length > 1 && (
+                                                                    <div className="text-xs text-blue-600 dark:text-blue-400 underline">
+                                                                        Click to view all {transaction.details.items.length} items
+                                                                    </div>
+                                                                )}
+                                                            </button>
+                                                        ) : 'N/A'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
@@ -289,8 +283,12 @@ const PaymentAccountDetails = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                                                +₹{transaction.amount.toLocaleString()}
+                                            <div className={`text-lg font-bold ${transaction.type === 'purchase'
+                                                    ? 'text-red-600 dark:text-red-400'
+                                                    : 'text-green-600 dark:text-green-400'
+                                                }`}>
+                                                {transaction.type === 'purchase' ? '-' : '+'}
+                                                ₹{transaction.amount.toLocaleString()}
                                             </div>
                                         </td>
                                     </tr>

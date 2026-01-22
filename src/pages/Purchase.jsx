@@ -10,8 +10,10 @@ import {
   rejectPurchase,
   receivePurchase,
   reset,
-  clearPurchase
+  clearPurchase,
+  addPayment
 } from '@/redux/features/purchaseSlice/purchaseSlice';
+import PurchasePaymentModal from '@/components/PurchasePaymentModal';
 import supplierService from '@/services/supplierService';
 import { fetchProducts } from '@/redux/features/products/productSlice';
 import { selectUser } from '@/redux/features/auth/loginSlice';
@@ -26,6 +28,7 @@ const Purchase = () => {
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [suppliers, setSuppliers] = useState([]);
   const [filters, setFilters] = useState({
     status: '',
@@ -200,6 +203,23 @@ const Purchase = () => {
       });
   };
 
+  const handlePay = (purchase) => {
+    setSelectedPurchase(purchase ? purchase._id : null);
+    setShowPaymentModal(true);
+  };
+
+  const handleSubmitPayment = (purchaseId, paymentData) => {
+    return dispatch(addPayment({ purchaseId, paymentData }))
+      .unwrap()
+      .then(() => {
+        toast.success('Payment recorded successfully');
+        setShowPaymentModal(false);
+        if (currentView === 'detail') {
+          dispatch(getPurchase(selectedPurchase));
+        }
+      });
+  };
+
   const handleFilterChange = (newFilters) => {
     setFilters({ ...filters, ...newFilters });
   };
@@ -256,6 +276,7 @@ const Purchase = () => {
               onApprove={handleApprove}
               onReject={handleReject}
               onReceive={handleReceive}
+              onPay={handlePay}
               filters={filters}
               onFilterChange={handleFilterChange}
               user={user}
@@ -291,7 +312,14 @@ const Purchase = () => {
               purchase={purchases.find(p => p._id === selectedPurchase) || purchase}
               onClose={() => setShowReceiveModal(false)}
               onSubmit={handleSubmitReceive}
-              isLoading={isLoading}
+          )}
+
+          {showPaymentModal && selectedPurchase && (
+            <PurchasePaymentModal
+              isOpen={showPaymentModal}
+              onClose={() => setShowPaymentModal(false)}
+              purchase={purchases.find(p => p._id === selectedPurchase) || purchase}
+              onSubmit={handleSubmitPayment}
             />
           )}
         </>

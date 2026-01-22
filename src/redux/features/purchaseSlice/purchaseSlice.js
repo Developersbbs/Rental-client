@@ -131,6 +131,22 @@ export const receivePurchase = createAsyncThunk(
   }
 );
 
+export const addPayment = createAsyncThunk(
+  'purchases/addPayment',
+  async ({ purchaseId, paymentData }, thunkAPI) => {
+    try {
+      return await purchaseService.addPayment(purchaseId, paymentData);
+    } catch (error) {
+      const message = (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) || error.message || error.toString();
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
 const initialState = {
   purchases: [],
   purchase: null,
@@ -253,6 +269,18 @@ const purchaseSlice = createSlice({
       })
       // Receive Purchase
       .addCase(receivePurchase.fulfilled, (state, action) => {
+        state.purchases = state.purchases.map(purchase =>
+          purchase._id === action.payload._id ? action.payload : purchase
+        );
+        if (state.purchase && state.purchase._id === action.payload._id) {
+          state.purchase = action.payload;
+        }
+        if (state.purchase && state.purchase._id === action.payload._id) {
+          state.purchase = action.payload;
+        }
+      })
+      // Add Payment
+      .addCase(addPayment.fulfilled, (state, action) => {
         state.purchases = state.purchases.map(purchase =>
           purchase._id === action.payload._id ? action.payload : purchase
         );
