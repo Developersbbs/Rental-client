@@ -13,10 +13,11 @@ import {
     getActiveRentalsReport,
     getRentalHistoryReport,
     getOverdueRentalsReport,
-    getBookingCalendarReport
+    getBookingCalendarReport,
+    getInventoryStatusReport
 } from '../../services/reportService';
 import rentalService from '../../services/rentalService';
-import { TrendingUp, DollarSign, Package as PackageIcon, LineChart, Clock, AlertCircle, Calendar, FileDown, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TrendingUp, DollarSign, Package as PackageIcon, LineChart, Clock, AlertCircle, Calendar, FileDown, Filter, ChevronLeft, ChevronRight, Archive } from 'lucide-react';
 
 ChartJS.register(
     CategoryScale,
@@ -34,6 +35,7 @@ const RentalReportsTab = () => {
     const [rentalHistory, setRentalHistory] = useState(null);
     const [overdueRentals, setOverdueRentals] = useState(null);
     const [bookings, setBookings] = useState(null);
+    const [inventoryReport, setInventoryReport] = useState(null);
     const [performanceData, setPerformanceData] = useState({
         revenue: [],
         popularProducts: [],
@@ -70,6 +72,10 @@ const RentalReportsTab = () => {
                 case 'calendar':
                     const calendarRes = await getBookingCalendarReport(filters);
                     if (calendarRes.success) setBookings(calendarRes.data);
+                    break;
+                case 'inventory':
+                    const invRes = await getInventoryStatusReport({ status: 'scrap' });
+                    if (invRes.success) setInventoryReport(invRes.data);
                     break;
                 case 'performance':
                     const [statsData, revData, popData] = await Promise.all([
@@ -369,6 +375,85 @@ const RentalReportsTab = () => {
         );
     };
 
+    const renderInventoryReport = () => {
+        if (!inventoryReport) return null;
+
+        const scrappedItems = inventoryReport.items || [];
+        const totalScrappedCost = scrappedItems.reduce((sum, item) => sum + (item.purchaseCost || 0), 0);
+
+        return (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gradient-to-br from-orange-500 to-red-600 p-6 rounded-2xl text-white shadow-lg shadow-orange-200 dark:shadow-none">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-orange-100 text-sm font-medium mb-1">Total Scrapped Items</p>
+                                <h3 className="text-3xl font-black">{inventoryReport.summary?.total || 0}</h3>
+                            </div>
+                            <div className="p-2 bg-white/20 rounded-lg">
+                                <Archive className="w-6 h-6 text-white" />
+                            </div>
+                        </div>
+                        <p className="mt-2 text-xs text-orange-100 font-medium">
+                            Items permanently removed from inventory
+                        </p>
+                    </div>
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Total Asset Value Lost</p>
+                        <h3 className="text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tight">{formatCurrency(totalScrappedCost)}</h3>
+                        <p className="mt-2 text-xs text-slate-400">Based on original purchase cost</p>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50 dark:bg-slate-900/50 border-bottom border-slate-200 dark:border-slate-700">
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Item ID</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Product</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Scrapped Date</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Reason</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Cost</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                            {scrappedItems.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
+                                        No scrapped items found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                scrappedItems.map((item) => {
+                                    // Find the history entry for scrap action
+                                    const scrapEntry = item.history?.slice().reverse().find(h => h.action === 'scrapped') || {};
+
+                                    return (
+                                        <tr key={item._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-200 font-mono">{item.uniqueIdentifier}</td>
+                                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                                {item.rentalProductId?.name || 'Unknown Product'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">
+                                                {scrapEntry.date ? formatDate(scrapEntry.date) : 'N/A'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-300 italic">
+                                                {scrapEntry.details || 'No reason provided'}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-100 text-right">
+                                                {formatCurrency(item.purchaseCost)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
     const renderPerformance = () => {
         const { revenue, popularProducts, stats } = performanceData;
 
@@ -559,7 +644,8 @@ const RentalReportsTab = () => {
                                 { id: 'active', icon: <LineChart className="w-4 h-4" />, label: 'Active Rentals' },
                                 { id: 'history', icon: <Clock className="w-4 h-4" />, label: 'Rental History' },
                                 { id: 'overdue', icon: <AlertCircle className="w-4 h-4" />, label: 'Overdue' },
-                                { id: 'calendar', icon: <Calendar className="w-4 h-4" />, label: 'Calendar' }
+                                { id: 'calendar', icon: <Calendar className="w-4 h-4" />, label: 'Calendar' },
+                                { id: 'inventory', icon: <Archive className="w-4 h-4" />, label: 'Scrapped Items' }
                             ].map((report) => (
                                 <button
                                     key={report.id}
@@ -615,7 +701,9 @@ const RentalReportsTab = () => {
                         </div>
                     )}
 
-                    {(activeReport === 'active' || activeReport === 'overdue') && (
+
+
+                    {(activeReport === 'active' || activeReport === 'overdue' || activeReport === 'inventory') && (
                         <div className="mt-6 flex justify-end">
                             <button
                                 onClick={handleExport}
@@ -640,6 +728,7 @@ const RentalReportsTab = () => {
                             {activeReport === 'history' && renderRentalHistory()}
                             {activeReport === 'overdue' && renderOverdueRentals()}
                             {activeReport === 'calendar' && renderBookingCalendar()}
+                            {activeReport === 'inventory' && renderInventoryReport()}
                         </>
                     )}
                 </div>

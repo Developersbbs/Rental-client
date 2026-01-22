@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Edit2, Save, X, History } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Save, X, History, Archive } from 'lucide-react';
+import ScrapItemModal from '../../components/ScrapItemModal';
 import rentalInventoryItemService from '../../services/rentalInventoryItemService';
 import rentalProductService from '../../services/rentalProductService';
 import accessoryService from '../../services/accessoryService';
@@ -35,6 +36,14 @@ const ManageRentalItems = () => {
         monthlyRent: '',
         accessories: []
     });
+
+    // Scrap Modal state
+    const [showScrapModal, setShowScrapModal] = useState(false);
+    const [scrappingItem, setScrappingItem] = useState(null);
+
+    // View Scrap Details state
+    const [showScrapDetailsModal, setShowScrapDetailsModal] = useState(false);
+    const [scrapDetails, setScrapDetails] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -112,6 +121,39 @@ const ManageRentalItems = () => {
             setError(err.message || 'Operation failed');
             setTimeout(() => setError(''), 3000);
         }
+    };
+
+    const handleScrap = (item) => {
+        setScrappingItem(item);
+        setShowScrapModal(true);
+    };
+
+    const handleScrapSubmit = async (itemId, reason) => {
+        try {
+            await rentalInventoryItemService.updateItem(itemId, {
+                status: 'scrap',
+                notes: reason
+            });
+            setSuccess('Item scrapped successfully');
+            setTimeout(() => setSuccess(''), 3000);
+            fetchData();
+        } catch (err) {
+            setError(err.message || 'Failed to scrap item');
+            setTimeout(() => setError(''), 3000);
+        }
+    };
+
+    const handleViewScrapReason = (item) => {
+        // Find the 'scrapped' action in history
+        const scrapEntry = item.history?.slice().reverse().find(h => h.action === 'scrapped');
+
+        setScrapDetails({
+            uniqueIdentifier: item.uniqueIdentifier,
+            reason: scrapEntry?.details || 'No reason recorded',
+            date: scrapEntry?.date || item.updatedAt,
+            performedBy: scrapEntry?.performedBy
+        });
+        setShowScrapDetailsModal(true);
     };
 
     const resetForm = () => {
@@ -238,7 +280,11 @@ const ManageRentalItems = () => {
                                 <tr key={item._id}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.uniqueIdentifier}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                                        <span
+                                            onClick={() => item.status === 'scrap' ? handleViewScrapReason(item) : null}
+                                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)} ${item.status === 'scrap' ? 'cursor-pointer hover:opacity-80 underline decoration-dotted underline-offset-2' : ''}`}
+                                            title={item.status === 'scrap' ? 'Click to view reason' : ''}
+                                        >
                                             {item.status}
                                         </span>
                                     </td>
@@ -256,6 +302,15 @@ const ManageRentalItems = () => {
                                         <button onClick={() => handleDelete(item._id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
+                                        {item.status !== 'scrap' && (
+                                            <button
+                                                onClick={() => handleScrap(item)}
+                                                className="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300"
+                                                title="Scrap Item"
+                                            >
+                                                <Archive className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))
@@ -532,6 +587,53 @@ const ManageRentalItems = () => {
                         </form>
                     </div >
                 </div >
+            )}
+
+            {/* Scrap Modal */}
+            <ScrapItemModal
+                isOpen={showScrapModal}
+                onClose={() => setShowScrapModal(false)}
+                item={scrappingItem}
+                onSubmit={handleScrapSubmit}
+            />
+
+            {/* Scrap Details View Modal */}
+            {showScrapDetailsModal && scrapDetails && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[160] p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-sm flex flex-col animate-in fade-in zoom-in duration-200">
+                        <div className="flex justify-between items-center p-4 border-b dark:border-slate-700 bg-red-50 dark:bg-red-900/10 rounded-t-lg">
+                            <h3 className="text-md font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+                                <Archive className="w-4 h-4" />
+                                Scrapped Item Details
+                            </h3>
+                            <button onClick={() => setShowScrapDetailsModal(false)} className="text-gray-400 hover:text-gray-500">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Item ID</label>
+                                <p className="text-gray-900 dark:text-gray-200 font-mono font-bold">{scrapDetails.uniqueIdentifier}</p>
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Scrapped On</label>
+                                <p className="text-gray-900 dark:text-gray-200">{new Date(scrapDetails.date).toLocaleDateString()} at {new Date(scrapDetails.date).toLocaleTimeString()}</p>
+                            </div>
+                            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg border border-slate-100 dark:border-slate-700">
+                                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1">Reason</label>
+                                <p className="text-gray-800 dark:text-gray-300 italic whitespace-pre-wrap">{scrapDetails.reason}</p>
+                            </div>
+                        </div>
+                        <div className="p-4 border-t dark:border-slate-700 flex justify-end">
+                            <button
+                                onClick={() => setShowScrapDetailsModal(false)}
+                                className="px-4 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div >
     );
