@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
 import { ArrowLeft, Plus, Trash2, Edit2, Save, X, History, Archive, Ban } from 'lucide-react';
+import { toast } from 'react-toastify';
 import ScrapItemModal from '../../components/ScrapItemModal';
 import rentalInventoryItemService from '../../services/rentalInventoryItemService';
 import rentalProductService from '../../services/rentalProductService';
@@ -15,8 +17,7 @@ const ManageRentalItems = () => {
     const [viewMode, setViewMode] = useState('active'); // 'active' or 'archived'
     const [availableAccessories, setAvailableAccessories] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +37,9 @@ const ManageRentalItems = () => {
         hourlyRent: '',
         dailyRent: '',
         monthlyRent: '',
-        accessories: []
+        monthlyRent: '',
+        accessories: [],
+        damageReason: ''
     });
 
     // Scrap Modal state
@@ -71,11 +74,12 @@ const ManageRentalItems = () => {
             setAvailableAccessories(accessoriesData);
 
             setLoading(false);
+
         } catch (err) {
             console.error(err);
             // Detailed error message
             const errMsg = err.message || (err.response?.data?.message) || 'Failed to fetch data';
-            setError(errMsg);
+            toast.error(errMsg);
             setLoading(false);
         }
     };
@@ -93,7 +97,8 @@ const ManageRentalItems = () => {
             hourlyRent: item.hourlyRent || '',
             dailyRent: item.dailyRent || '',
             monthlyRent: item.monthlyRent || '',
-            accessories: item.accessories || []
+            accessories: item.accessories || [],
+            damageReason: item.damageReason || ''
         });
         setShowModal(true);
     };
@@ -103,12 +108,10 @@ const ManageRentalItems = () => {
         if (window.confirm(`Are you sure you want to ${action} this rental item?`)) {
             try {
                 await rentalInventoryItemService.toggleArchiveStatus(id);
-                setSuccess(`Rental item ${isArchiving ? 'archived' : 'restored'} successfully`);
-                setTimeout(() => setSuccess(''), 3000);
+                toast.success(`Rental item ${isArchiving ? 'archived' : 'restored'} successfully`);
                 fetchData();
             } catch (err) {
-                setError(`Failed to ${action} rental item`);
-                setTimeout(() => setError(''), 3000);
+                toast.error(`Failed to ${action} rental item`);
             }
         }
     };
@@ -117,12 +120,10 @@ const ManageRentalItems = () => {
         if (window.confirm('Are you sure you want to PERMANENTLY delete this rental item? This action cannot be undone.')) {
             try {
                 await rentalInventoryItemService.deleteItem(id);
-                setSuccess('Rental item deleted successfully');
-                setTimeout(() => setSuccess(''), 3000);
+                toast.success('Rental item deleted successfully');
                 fetchData();
             } catch (err) {
-                setError('Failed to delete rental item');
-                setTimeout(() => setError(''), 3000);
+                toast.error('Failed to delete rental item');
             }
         }
     };
@@ -132,18 +133,16 @@ const ManageRentalItems = () => {
         try {
             if (editingItem) {
                 await rentalInventoryItemService.updateItem(editingItem._id, formData);
-                setSuccess('Rental item updated successfully');
+                toast.success('Rental item updated successfully');
             } else {
                 await rentalInventoryItemService.addItem(productId, formData);
-                setSuccess('Rental item added successfully');
+                toast.success('Rental item added successfully');
             }
-            setTimeout(() => setSuccess(''), 3000);
             setShowModal(false);
             resetForm();
             fetchData();
         } catch (err) {
-            setError(err.message || 'Operation failed');
-            setTimeout(() => setError(''), 3000);
+            toast.error(err.message || 'Operation failed');
         }
     };
 
@@ -158,24 +157,22 @@ const ManageRentalItems = () => {
                 status: 'scrap',
                 notes: reason
             });
-            setSuccess('Item scrapped successfully');
-            setTimeout(() => setSuccess(''), 3000);
+            toast.success('Item scrapped successfully');
             fetchData();
         } catch (err) {
-            setError(err.message || 'Failed to scrap item');
-            setTimeout(() => setError(''), 3000);
+            toast.error(err.message || 'Failed to scrap item');
         }
     };
 
     const handleViewScrapReason = (item) => {
-        // Find the 'scrapped' action in history
-        const scrapEntry = item.history?.slice().reverse().find(h => h.action === 'scrapped');
+        // Find the 'scrapped' or 'marked_damaged' action in history
+        const historyEntry = item.history?.slice().reverse().find(h => h.action === 'scrapped' || h.action === 'marked_damaged');
 
         setScrapDetails({
             uniqueIdentifier: item.uniqueIdentifier,
-            reason: scrapEntry?.details || 'No reason recorded',
-            date: scrapEntry?.date || item.updatedAt,
-            performedBy: scrapEntry?.performedBy
+            reason: item.damageReason || historyEntry?.details || 'No reason recorded',
+            date: historyEntry?.date || item.updatedAt,
+            performedBy: historyEntry?.performedBy
         });
         setShowScrapDetailsModal(true);
     };
@@ -193,7 +190,8 @@ const ManageRentalItems = () => {
             hourlyRent: '',
             dailyRent: '',
             monthlyRent: '',
-            accessories: []
+            accessories: [],
+            damageReason: ''
         });
     };
 
@@ -203,6 +201,7 @@ const ManageRentalItems = () => {
             case 'rented': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
             case 'maintenance': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
             case 'scrap': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+            case 'damaged': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300';
             case 'missing': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
             default: return 'bg-gray-100 text-gray-800';
         }
@@ -279,8 +278,8 @@ const ManageRentalItems = () => {
                 </button>
             </div>
 
-            {error && <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">{error}</div>}
-            {success && <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4">{success}</div>}
+            {/* {error && <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">{error}</div>}
+            {success && <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4">{success}</div>} */}
 
             {/* Pagination Controls - Top */}
             {totalItems > 0 && (
@@ -327,9 +326,9 @@ const ManageRentalItems = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.uniqueIdentifier}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
-                                            onClick={() => item.status === 'scrap' ? handleViewScrapReason(item) : null}
-                                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)} ${item.status === 'scrap' ? 'cursor-pointer hover:opacity-80 underline decoration-dotted underline-offset-2' : ''}`}
-                                            title={item.status === 'scrap' ? 'Click to view reason' : ''}
+                                            onClick={() => (item.status === 'scrap' || item.status === 'damaged') ? handleViewScrapReason(item) : null}
+                                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)} ${(item.status === 'scrap' || item.status === 'damaged') ? 'cursor-pointer hover:opacity-80 underline decoration-dotted underline-offset-2' : ''}`}
+                                            title={(item.status === 'scrap' || item.status === 'damaged') ? 'Click to view details' : ''}
                                         >
                                             {item.status}
                                         </span>
@@ -444,7 +443,21 @@ const ManageRentalItems = () => {
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                                     <select
                                         value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        onChange={(e) => {
+                                            const newStatus = e.target.value;
+                                            let newCondition = formData.condition;
+
+                                            // If status is set to available, ensure condition is NOT damaged
+                                            if (newStatus === 'available' && newCondition === 'damaged') {
+                                                newCondition = 'good'; // Default to good
+                                            }
+
+                                            setFormData({
+                                                ...formData,
+                                                status: newStatus,
+                                                condition: newCondition
+                                            });
+                                        }}
                                         className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                     >
                                         <option value="available">Available</option>
@@ -452,13 +465,45 @@ const ManageRentalItems = () => {
                                         <option value="maintenance">Maintenance</option>
                                         <option value="scrap">Scrap</option>
                                         <option value="missing">Missing</option>
+                                        <option value="damaged">Damaged</option>
                                     </select>
                                 </div>
+                                {formData.status === 'damaged' && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-red-600 dark:text-red-400 mb-1">Damage Reason *</label>
+                                        <textarea
+                                            value={formData.damageReason}
+                                            onChange={(e) => setFormData({ ...formData, damageReason: e.target.value })}
+                                            className="w-full p-2 border border-red-300 rounded focus:ring-red-500 focus:border-red-500 dark:bg-slate-700 dark:border-red-900 dark:text-white"
+                                            rows="2"
+                                            placeholder="Please describe the damage details..."
+                                            required
+                                        />
+                                    </div>
+                                )}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Condition</label>
                                     <select
                                         value={formData.condition}
-                                        onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                                        onChange={(e) => {
+                                            const newCondition = e.target.value;
+                                            let newStatus = formData.status;
+
+                                            // If condition is set to damaged, force status to damaged
+                                            if (newCondition === 'damaged') {
+                                                newStatus = 'damaged';
+                                            } else if (newCondition !== 'damaged' && newStatus === 'damaged') {
+                                                // If condition is changed from damaged to something else, suggest status change (e.g. to available)
+                                                // But let's just default to available for convenience
+                                                newStatus = 'available';
+                                            }
+
+                                            setFormData({
+                                                ...formData,
+                                                condition: newCondition,
+                                                status: newStatus
+                                            });
+                                        }}
                                         className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                     >
                                         <option value="new">New</option>

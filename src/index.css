@@ -271,3 +271,26 @@
     @apply text-foreground;
   }
 }
+
+/* Custom Toastify Styles */
+:root {
+  --toastify-color-success: #3b82f6; /* Blue-500 */
+}
+
+.Toastify__toast--success {
+  background: var(--toastify-color-success) !important;
+  color: white !important;
+}
+
+.Toastify__toast--success .Toastify__progress-bar {
+  background: #1e40af !important; /* Blue-800 */
+}
+
+.Toastify__toast--success .Toastify__close-button {
+  color: white !important;
+  opacity: 0.8;
+}
+
+.Toastify__toast-icon svg {
+  fill: white !important;
+}

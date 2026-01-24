@@ -38,6 +38,7 @@ const RentalReturn = () => {
                     productName: item.item?.name || item.item?.uniqueIdentifier || 'Unknown Product',
                     returnCondition: 'good', // Default
                     damageCost: 0,
+                    damageReason: '', // Added damage reason
                     isReturning: true,
                     accessories: item.accessories ? item.accessories.map(acc => ({
                         accessoryId: acc.accessoryId?._id || acc.accessoryId, // Handle populated or unpopulated
@@ -139,6 +140,7 @@ const RentalReturn = () => {
                     itemId: i.itemId,
                     returnCondition: i.returnCondition,
                     damageCost: parseFloat(i.damageCost),
+                    damageReason: i.damageReason, // Send damage reason
                     accessories: i.accessories.map(acc => ({
                         accessoryId: acc.accessoryId,
                         status: acc.status,
@@ -319,14 +321,26 @@ const RentalReturn = () => {
                                                     </select>
                                                 </div>
                                                 {item.returnCondition === 'damaged' && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Damage Cost (₹)</label>
-                                                        <input
-                                                            type="number"
-                                                            value={item.damageCost}
-                                                            onChange={(e) => handleItemChange(index, 'damageCost', e.target.value)}
-                                                            className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                                                        />
+                                                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Damage Cost (₹)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={item.damageCost}
+                                                                onChange={(e) => handleItemChange(index, 'damageCost', e.target.value)}
+                                                                className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Damage Reason</label>
+                                                            <input
+                                                                type="text"
+                                                                value={item.damageReason}
+                                                                onChange={(e) => handleItemChange(index, 'damageReason', e.target.value)}
+                                                                placeholder="Describe the damage..."
+                                                                className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                                            />
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

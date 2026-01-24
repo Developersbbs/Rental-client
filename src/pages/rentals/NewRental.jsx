@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, Calendar, User, Package, DollarSign, Save, X, AlertCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 import rentalCustomerService from '../../services/rentalCustomerService';
 import rentalProductService from '../../services/rentalProductService';
 import rentalService from '../../services/rentalService';
@@ -18,8 +19,9 @@ const NewRental = () => {
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
+
+    // const [error, setError] = useState('');
+    // const [success, setSuccess] = useState('');
 
     const [formData, setFormData] = useState({
         customerId: '',
@@ -79,7 +81,7 @@ const NewRental = () => {
                 const accessories = allProducts.filter(p => p.isSellingAccessory === true);
                 setSellingAccessories(accessories);
             } catch (err) {
-                setError('Failed to load initial data');
+                toast.error('Failed to load initial data');
             } finally {
                 setLoading(false);
             }
@@ -99,7 +101,7 @@ const NewRental = () => {
 
                     // Fetch available inventory items
                     const items = await rentalInventoryItemService.getItemsByRentalProduct(itemInput.productId);
-                    setAvailableItems(items.filter(i => i.status === 'available'));
+                    setAvailableItems(items.filter(i => i.status === 'available' || i.status === 'damaged'));
 
                     // Set default rent price
                     setItemInput(prev => ({
@@ -120,12 +122,17 @@ const NewRental = () => {
     const handleAddItem = () => {
         // Ensure a product is selected
         if (!itemInput.productId) {
-            setError('Please select a product');
+            toast.error('Please select a product');
             return;
         }
 
         const product = products.find(p => p._id === itemInput.productId);
         if (!product) return;
+
+        if (selectedInventoryItem && selectedInventoryItem.status === 'damaged') {
+            toast.error(`Cannot add damaged item: ${selectedInventoryItem.uniqueIdentifier}`);
+            return;
+        }
 
         const selectedItemId = itemInput.productItemId || itemInput.productId;
 
@@ -172,7 +179,7 @@ const NewRental = () => {
         if (!accessory) return;
 
         if (accessory.quantity < sellingQuantity) {
-            setError(`Insufficient stock for ${accessory.name}. Available: ${accessory.quantity}`);
+            toast.error(`Insufficient stock for ${accessory.name}. Available: ${accessory.quantity}`);
             return;
         }
 
@@ -263,8 +270,8 @@ const NewRental = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setSuccess('');
+        // setError('');
+        // setSuccess('');
 
         try {
             // Format data for API
@@ -293,7 +300,7 @@ const NewRental = () => {
             };
 
             await rentalService.createRental(rentalData);
-            setSuccess('Rental created successfully!');
+            toast.success('Rental created successfully!');
 
             // Reset form
             setFormData({
@@ -312,7 +319,7 @@ const NewRental = () => {
                 navigate('/rentals/active');
             }, 1500);
         } catch (err) {
-            setError(err.message || 'Failed to create rental');
+            toast.error(err.message || 'Failed to create rental');
         }
     };
 
@@ -327,18 +334,7 @@ const NewRental = () => {
                 </div>
             </div>
 
-            {error && (
-                <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
-                </div>
-            )}
-            {success && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-                    <Save className="w-4 h-4" />
-                    {success}
-                </div>
-            )}
+
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column: Form */}
@@ -452,6 +448,13 @@ const NewRental = () => {
                                             const itemId = e.target.value;
                                             setItemInput({ ...itemInput, productItemId: itemId });
                                             const item = availableItems.find(i => i._id === itemId);
+
+                                            if (item && item.status === 'damaged') {
+                                                toast.error(`Cannot rent damaged item. Reason: ${item.damageReason || 'No reason provided'}`);
+                                                // Optional: Clear selection or allow viewing but block 'Add'
+                                                // For now, we allow selecting to see details but 'Add' will be blocked
+                                            }
+
                                             setSelectedInventoryItem(item);
                                         }}
                                         className="premium-input"
@@ -459,8 +462,8 @@ const NewRental = () => {
                                     >
                                         <option value="">-- Any Available Item --</option>
                                         {availableItems.map(item => (
-                                            <option key={item._id} value={item._id}>
-                                                {item.uniqueIdentifier} ({item.condition})
+                                            <option key={item._id} value={item._id} className={item.status === 'damaged' ? 'text-red-500 font-bold' : ''}>
+                                                {item.uniqueIdentifier} ({item.status === 'damaged' ? 'DAMAGED' : item.condition})
                                             </option>
                                         ))}
                                     </select>

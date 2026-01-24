@@ -110,7 +110,7 @@ const PurchasePaymentModal = ({ isOpen, onClose, purchase, onSubmit }) => {
                                 </option>
                             ))}
                         </select>
-                        <p className="text-xs text-gray-500 mt-1">Select account to deduct balance from.</p>
+                        <p className="text-xs text-gray-500 mt-1">Select account to deduct balance from (optional for Cash).</p>
                     </div>
 
                     <div>

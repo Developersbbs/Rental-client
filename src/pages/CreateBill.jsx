@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { selectUser } from '../redux/features/auth/loginSlice';
 import { Plus, Edit, Trash2, Eye, FileText, Calendar, DollarSign, AlertCircle, Search, Filter, Download, Printer, X, User, Package } from 'lucide-react';
+import { toast } from 'react-toastify';
 import instance from '../services/instance';
 import productService from '../services/productService';
 import customerService from '../services/customerService';
@@ -33,10 +34,9 @@ const ManageBills = () => {
     pendingPayments: 0,
     totalRevenue: 0
   });
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  // const [error, setError] = useState('');
+  // const [success, setSuccess] = useState('');
   const [pagination, setPagination] = useState({
     currentPage: 1,
     itemsPerPage: 10,
@@ -107,7 +107,7 @@ const ManageBills = () => {
       setFilteredProducts(response.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setError('Failed to load products');
+      toast.error('Failed to load products');
     }
   }, []);
 
@@ -175,7 +175,7 @@ const ManageBills = () => {
         pendingPayments: 0,
         totalRevenue: 0
       });
-      setError(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -326,7 +326,7 @@ const ManageBills = () => {
       resetCustomerForm();
       selectCustomer(newCustomer, updatedCustomers);
     } catch (error) {
-      setCustomerFormError(error.message || 'Failed to create customer. Please try again.');
+      setCustomerFormError(error.message || 'Failed to create customer. Please try again.'); // Keep local error for form modal
     } finally {
       setCustomerFormSubmitting(false);
     }
@@ -402,7 +402,7 @@ const ManageBills = () => {
   const selectProduct = async (product, index) => {
     // Check if product is out of stock
     if (product.quantity <= 0) {
-      alert(`Product "${product.name}" is currently out of stock and cannot be added to the bill.`);
+      toast.warning(`Product "${product.name}" is currently out of stock and cannot be added to the bill.`);
       return;
     }
 
@@ -529,12 +529,9 @@ const ManageBills = () => {
     if (submitting) return; // Prevent multiple clicks during loading
 
     setSubmitting(true);
-    setError('');
-    setSuccess('');
-
-    setError('');
-    setSuccess('');
-    setSubmitting(true);
+    // setError('');
+    // setSuccess('');
+    // setSubmitting(true);
 
     try {
       if (!formData.customerId) {
@@ -572,18 +569,17 @@ const ManageBills = () => {
         throw new Error(`Failed to ${modalMode} bill`);
       }
 
-      setSuccess(`Bill ${modalMode === 'create' ? 'created' : 'updated'} successfully!`);
+      toast.success(`Bill ${modalMode === 'create' ? 'created' : 'updated'} successfully!`);
       setShowModal(false);
       resetForm();
       fetchData();
     } catch (err) {
-      // Extract detailed error message from server response
       const errorMessage = err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
         'Failed to process the bill. Please try again.';
       console.error('Bill submission error:', err.response?.data || err);
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -593,7 +589,7 @@ const ManageBills = () => {
     try {
       const printWindow = window.open('', '_blank', 'width=800,height=600');
       if (!printWindow) {
-        alert('Please allow popups for this site to print bills');
+        toast.error('Please allow popups for this site to print bills');
         return;
       }
 
@@ -734,7 +730,7 @@ const ManageBills = () => {
 
     } catch (error) {
       console.error('Print failed:', error);
-      alert('Failed to print bill. Please try again or use browser print option.');
+      toast.error('Failed to print bill. Please try again or use browser print option.');
     }
   };
 
@@ -863,7 +859,7 @@ const ManageBills = () => {
 
     } catch (error) {
       console.error('Download failed:', error);
-      alert('Failed to download bill. Please try the print option instead.');
+      toast.error('Failed to download bill. Please try the print option instead.');
     }
   };
 
@@ -2034,15 +2030,14 @@ const ManageBills = () => {
               {/* Payment Account */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Payment Account <span className="text-red-500">*</span>
+                  Payment Account
                 </label>
                 <select
                   value={paymentFormData.paymentAccountId}
                   onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentAccountId: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                  required
                 >
-                  <option value="">Select Account</option>
+                  <option value="">Select Account (Optional)</option>
                   {paymentAccounts.map(account => (
                     <option key={account._id} value={account._id}>
                       {account.name} - ₹{account.currentBalance.toLocaleString()}
@@ -2050,7 +2045,7 @@ const ManageBills = () => {
                   ))}
                 </select>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Select which account will receive this payment
+                  Select account to record this transaction (optional for Cash)
                 </p>
               </div>
 
