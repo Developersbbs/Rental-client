@@ -23,6 +23,15 @@ const ManageRentalItems = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
+    // Search/Filter state
+    const [searchFilters, setSearchFilters] = useState({
+        searchText: '',
+        status: '',
+        condition: '',
+        purchaseDateFrom: '',
+        purchaseDateTo: ''
+    });
+
     // Modal state for Add/Edit
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
@@ -34,9 +43,9 @@ const ManageRentalItems = () => {
         purchaseCost: '',
         batchNumber: '',
         notes: '',
+        serialNumber: '',
         hourlyRent: '',
         dailyRent: '',
-        monthlyRent: '',
         monthlyRent: '',
         accessories: [],
         damageReason: ''
@@ -94,6 +103,7 @@ const ManageRentalItems = () => {
             purchaseCost: item.purchaseCost || '',
             batchNumber: item.batchNumber || '',
             notes: item.notes || '',
+            serialNumber: item.serialNumber || '',
             hourlyRent: item.hourlyRent || '',
             dailyRent: item.dailyRent || '',
             monthlyRent: item.monthlyRent || '',
@@ -187,6 +197,7 @@ const ManageRentalItems = () => {
             purchaseCost: '',
             batchNumber: '',
             notes: '',
+            serialNumber: '',
             hourlyRent: '',
             dailyRent: '',
             monthlyRent: '',
@@ -207,13 +218,51 @@ const ManageRentalItems = () => {
         }
     };
 
-    // Pagination calculations
+    // Apply search filters
     const displayItems = viewMode === 'active' ? items : archivedItems;
-    const totalItems = displayItems.length;
+    const filteredItems = displayItems.filter(item => {
+        // Text search (unique ID, serial number, batch number)
+        if (searchFilters.searchText) {
+            const searchLower = searchFilters.searchText.toLowerCase();
+            const matchesText =
+                item.uniqueIdentifier?.toLowerCase().includes(searchLower) ||
+                item.serialNumber?.toLowerCase().includes(searchLower) ||
+                item.batchNumber?.toLowerCase().includes(searchLower);
+            if (!matchesText) return false;
+        }
+
+        // Status filter
+        if (searchFilters.status && item.status !== searchFilters.status) {
+            return false;
+        }
+
+        // Condition filter
+        if (searchFilters.condition && item.condition !== searchFilters.condition) {
+            return false;
+        }
+
+        // Purchase date range filter
+        if (searchFilters.purchaseDateFrom) {
+            const itemDate = new Date(item.purchaseDate);
+            const fromDate = new Date(searchFilters.purchaseDateFrom);
+            if (itemDate < fromDate) return false;
+        }
+
+        if (searchFilters.purchaseDateTo) {
+            const itemDate = new Date(item.purchaseDate);
+            const toDate = new Date(searchFilters.purchaseDateTo);
+            if (itemDate > toDate) return false;
+        }
+
+        return true;
+    });
+
+    // Pagination calculations
+    const totalItems = filteredItems.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentItems = displayItems.slice(startIndex, endIndex);
+    const currentItems = filteredItems.slice(startIndex, endIndex);
 
     // Pagination handlers
     const handlePageChange = (newPage) => {
@@ -278,8 +327,89 @@ const ManageRentalItems = () => {
                 </button>
             </div>
 
-            {/* {error && <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded mb-4">{error}</div>}
-            {success && <div className="bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4">{success}</div>} */}
+            {/* Advanced Search Filters */}
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Search & Filters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <div className="md:col-span-2">
+                        <input
+                            type="text"
+                            placeholder="Search by ID, Serial No, or Batch..."
+                            value={searchFilters.searchText}
+                            onChange={(e) => setSearchFilters({ ...searchFilters, searchText: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white text-sm"
+                        />
+                    </div>
+                    <div>
+                        <select
+                            value={searchFilters.status}
+                            onChange={(e) => setSearchFilters({ ...searchFilters, status: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white text-sm"
+                        >
+                            <option value="">All Status</option>
+                            <option value="available">Available</option>
+                            <option value="rented">Rented</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="scrap">Scrap</option>
+                            <option value="damaged">Damaged</option>
+                            <option value="missing">Missing</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select
+                            value={searchFilters.condition}
+                            onChange={(e) => setSearchFilters({ ...searchFilters, condition: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white text-sm"
+                        >
+                            <option value="">All Conditions</option>
+                            <option value="new">New</option>
+                            <option value="good">Good</option>
+                            <option value="fair">Fair</option>
+                            <option value="poor">Poor</option>
+                            <option value="damaged">Damaged</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setSearchFilters({
+                                searchText: '',
+                                status: '',
+                                condition: '',
+                                purchaseDateFrom: '',
+                                purchaseDateTo: ''
+                            })}
+                            className="px-4 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 dark:text-white"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mt-3">
+                    <div>
+                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Purchase From</label>
+                        <input
+                            type="date"
+                            value={searchFilters.purchaseDateFrom}
+                            onChange={(e) => setSearchFilters({ ...searchFilters, purchaseDateFrom: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Purchase To</label>
+                        <input
+                            type="date"
+                            value={searchFilters.purchaseDateTo}
+                            onChange={(e) => setSearchFilters({ ...searchFilters, purchaseDateTo: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg dark:bg-slate-700 dark:text-white text-sm"
+                        />
+                    </div>
+                    <div className="md:col-span-3 flex items-end">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Showing {currentItems.length} of {totalItems} items
+                        </p>
+                    </div>
+                </div>
+            </div>
 
             {/* Pagination Controls - Top */}
             {totalItems > 0 && (
@@ -308,6 +438,7 @@ const ManageRentalItems = () => {
                     <thead className="bg-gray-50 dark:bg-slate-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Unique ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Serial No</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Condition</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Purchase Date</th>
@@ -318,12 +449,20 @@ const ManageRentalItems = () => {
                     <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {currentItems.length === 0 ? (
                             <tr>
-                                <td colSpan="6" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No rental items found</td>
+                                <td colSpan="7" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">No rental items found</td>
                             </tr>
                         ) : (
                             currentItems.map((item) => (
                                 <tr key={item._id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{item.uniqueIdentifier}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button
+                                            onClick={() => navigate(`/rentals/items/${item._id}`)}
+                                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline"
+                                        >
+                                            {item.uniqueIdentifier}
+                                        </button>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{item.serialNumber || 'N/A'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
                                             onClick={() => (item.status === 'scrap' || item.status === 'damaged') ? handleViewScrapReason(item) : null}
@@ -540,6 +679,16 @@ const ManageRentalItems = () => {
                                         value={formData.batchNumber}
                                         onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
                                         className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Machine Serial Number</label>
+                                    <input
+                                        type="text"
+                                        value={formData.serialNumber}
+                                        onChange={(e) => setFormData({ ...formData, serialNumber: e.target.value })}
+                                        className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                        placeholder="Manufacturer serial number"
                                     />
                                 </div>
 

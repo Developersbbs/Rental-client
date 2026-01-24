@@ -2027,27 +2027,30 @@ const ManageBills = () => {
                 </select>
               </div>
 
-              {/* Payment Account */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Payment Account
-                </label>
-                <select
-                  value={paymentFormData.paymentAccountId}
-                  onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentAccountId: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">Select Account (Optional)</option>
-                  {paymentAccounts.map(account => (
-                    <option key={account._id} value={account._id}>
-                      {account.name} - ₹{account.currentBalance.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Select account to record this transaction (optional for Cash)
-                </p>
-              </div>
+              {/* Payment Account - Only show for non-cash payments */}
+              {paymentFormData.paymentMethod !== 'cash' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Payment Account {paymentFormData.paymentMethod === 'bank' && <span className="text-red-500">*</span>}
+                  </label>
+                  <select
+                    value={paymentFormData.paymentAccountId}
+                    onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentAccountId: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                    required={paymentFormData.paymentMethod === 'bank'}
+                  >
+                    <option value="">Select Account</option>
+                    {paymentAccounts.map(account => (
+                      <option key={account._id} value={account._id}>
+                        {account.name} - ₹{account.currentBalance.toLocaleString()}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {paymentFormData.paymentMethod === 'bank' ? 'Required for bank transfers' : 'Optional - Select account to record this transaction'}
+                  </p>
+                </div>
+              )}
 
               {/* Payment Date */}
               <div>

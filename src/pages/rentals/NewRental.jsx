@@ -101,7 +101,7 @@ const NewRental = () => {
 
                     // Fetch available inventory items
                     const items = await rentalInventoryItemService.getItemsByRentalProduct(itemInput.productId);
-                    setAvailableItems(items.filter(i => i.status === 'available' || i.status === 'damaged'));
+                    setAvailableItems(items.filter(i => i.status === 'available' || i.status === 'damaged' || i.status === 'maintenance'));
 
                     // Set default rent price
                     setItemInput(prev => ({
@@ -455,6 +455,19 @@ const NewRental = () => {
                                                 // For now, we allow selecting to see details but 'Add' will be blocked
                                             }
 
+                                            if (item && item.status === 'maintenance') {
+                                                toast.warning(`Alert: This item is currently under service/maintenance!`, {
+                                                    position: "top-center",
+                                                    autoClose: 5000,
+                                                    hideProgressBar: false,
+                                                    closeOnClick: true,
+                                                    pauseOnHover: true,
+                                                    draggable: true,
+                                                    progress: undefined,
+                                                    style: { background: '#FDE047', color: '#000', fontWeight: 'bold' } // Custom style for visibility
+                                                });
+                                            }
+
                                             setSelectedInventoryItem(item);
                                         }}
                                         className="premium-input"
@@ -462,8 +475,16 @@ const NewRental = () => {
                                     >
                                         <option value="">-- Any Available Item --</option>
                                         {availableItems.map(item => (
-                                            <option key={item._id} value={item._id} className={item.status === 'damaged' ? 'text-red-500 font-bold' : ''}>
-                                                {item.uniqueIdentifier} ({item.status === 'damaged' ? 'DAMAGED' : item.condition})
+                                            <option
+                                                key={item._id}
+                                                value={item._id}
+                                                className={
+                                                    item.status === 'damaged' ? 'text-red-500 font-bold' :
+                                                        item.status === 'maintenance' ? 'text-amber-500 font-bold bg-amber-50' : ''
+                                                }
+                                                style={item.status === 'maintenance' ? { color: 'orange', fontWeight: 'bold' } : {}} // Inline style fallback
+                                            >
+                                                {item.uniqueIdentifier} ({item.status === 'damaged' ? 'DAMAGED' : item.status === 'maintenance' ? 'SERVICE IN PROGRESS' : item.condition})
                                             </option>
                                         ))}
                                     </select>

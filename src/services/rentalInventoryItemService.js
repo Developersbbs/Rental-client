@@ -21,6 +21,16 @@ const rentalInventoryItemService = {
         }
     },
 
+    // Get item by ID
+    getItemById: async (id) => {
+        try {
+            const response = await instance.get(`/rental-inventory-items/${id}`);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: 'Failed to fetch item details' };
+        }
+    },
+
     // Add a new item
     addItem: async (rentalProductId, itemData) => {
         try {

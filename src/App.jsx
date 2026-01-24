@@ -43,6 +43,7 @@ import RentalCustomers from './pages/rentals/RentalCustomers'
 import RentalCategories from './pages/rentals/RentalCategories'
 import ManageProductItems from './pages/ManageProductItems'
 import ManageRentalItems from './pages/rentals/ManageRentalItems'
+import RentalItemDetails from './pages/rentals/RentalItemDetails'
 import ManageAccessories from './pages/rentals/ManageAccessories'
 import SellingAccessories from './pages/rentals/SellingAccessories'
 import AccessoryReport from './pages/reports/AccessoryReport'
@@ -195,6 +196,10 @@ const App = () => {
         {
           path: '/rentals/products/:productId/items',
           element: <ProtectedRoute><ManageRentalItems /></ProtectedRoute>
+        },
+        {
+          path: '/rentals/items/:itemId',
+          element: <ProtectedRoute><RentalItemDetails /></ProtectedRoute>
         },
         {
           path: '/rentals/products/:productId/accessories',
