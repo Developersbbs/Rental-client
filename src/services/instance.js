@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 // Use environment variable for baseURL
-const baseURL = 'http://localhost:5000/api'; // import.meta.env.VITE_API_URL;
+const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Log the base URL for debugging
 console.log('API Base URL:', baseURL);
